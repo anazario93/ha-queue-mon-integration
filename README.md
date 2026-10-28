@@ -13,7 +13,7 @@ Initial development version. Test against your Asterisk version and queue strate
 - Queue and position for each waiting caller
 - Wait duration, caller ID/name, and channel metadata
 - Abandoned-call counter
-- Configurable snapshot refresh interval
+- Configurable snapshot refresh interval (1–120 seconds)
 - AMI reconnection on the next refresh after a connection loss
 
 ## Installation
@@ -38,7 +38,7 @@ Each caller object includes `queue`, `position`, `caller_id`, `caller_name`, `ch
 
 ## Notes
 
-- Asterisk's `QueueStatus` action is used as the authoritative snapshot. Snapshot refresh defaults to every 10 seconds and can be configured in integration options (minimum 5 seconds).
+- Asterisk's `QueueStatus` action is used as the authoritative snapshot. Polling defaults to every **1 second** and can be changed in integration options to any whole number from 1 to 120 seconds. Every poll requests a full queue snapshot; on large deployments, increase the interval if AMI or Home Assistant load becomes noticeable.
 - Available-agent semantics can vary by queue strategy and device state. This initial implementation treats status `1` as available and excludes paused/in-call members. Validate this against your queue configuration.
 - The abandoned counter is in-memory and resets when the integration reloads or Home Assistant restarts in this initial release.
 - Treat caller IDs as sensitive data; limit access to dashboards and entity history as appropriate.
