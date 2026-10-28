@@ -75,7 +75,10 @@ class QueueCoordinator(DataUpdateCoordinator):
 
     def _handle_event(self, event: dict) -> None:
         """Track counters from unsolicited AMI events."""
-        self.last_event = event.get("Event")
+        event_name = event.get("Event")
+        if not event_name:
+            return
+        self.last_event = event_name
         if self.last_event == "QueueCallerAbandon":
             self.abandoned_calls += 1
         # The next periodic QueueStatus snapshot is authoritative for live state.
