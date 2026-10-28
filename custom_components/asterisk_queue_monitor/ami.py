@@ -35,6 +35,7 @@ class AmiClient:
         self._listeners: list[Callable[[dict], None]] = []
         self._snapshot_events: dict[str, list[dict]] = {}
         self._snapshot_futures: dict[str, asyncio.Future] = {}
+        self._completion_events: set[str] = set()
         self._ids = itertools.count(1)
         self.connected = False
         self._connect_lock = asyncio.Lock()
@@ -72,13 +73,16 @@ class AmiClient:
         future = loop.create_future()
         self._snapshot_events[action_id] = []
         self._snapshot_futures[action_id] = future
+        self._completion_events.add(action_id)
         try:
             await self._write_packet({"Action": "QueueStatus", "ActionID": action_id})
             return await asyncio.wait_for(future, timeout=15)
         except Exception:
+            raise
+        finally:
             self._snapshot_events.pop(action_id, None)
             self._snapshot_futures.pop(action_id, None)
-            raise
+            self._completion_events.discard(action_id)
 
     async def _send_action(self, fields: dict[str, str], completion: str) -> dict:
         """Send an action and wait for a matching response packet."""
@@ -126,8 +130,10 @@ class AmiClient:
                     elif packet.get("Response") and packet.get("Response", "").lower() != "success":
                         future.set_exception(ConnectionError(packet.get("Message", "AMI action failed")))
                     elif packet.get("Response") and packet.get("Response", "").lower() == "success":
-                        # Login response is resolved immediately.
-                        future.set_result(packet)
+                        # QueueStatus emits a success response before its events;
+                        # wait for QueueStatusComplete for snapshot actions.
+                        if action_id not in self._completion_events:
+                            future.set_result(packet)
         except asyncio.CancelledError:
             raise
         except (asyncio.IncompleteReadError, ConnectionError, OSError, asyncio.LimitOverrunError) as err:
