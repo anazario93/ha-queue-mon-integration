@@ -66,7 +66,7 @@ class QueueCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name=f"{DOMAIN}_{entry_id}",
-            update_interval=timedelta(seconds=max(5, int(interval))),
+            update_interval=timedelta(seconds=max(1, int(interval))),
         )
         self.client = client
         self.abandoned_calls = 0
