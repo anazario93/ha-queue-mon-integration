@@ -1,0 +1,13 @@
+{
+  "domain": "asterisk_queue_monitor",
+  "name": "Asterisk Queue Monitor",
+  "version": "0.1.0",
+  "documentation": "https://github.com/anazario93/ha-queue-mon-integration",
+  "issue_tracker": "https://github.com/anazario93/ha-queue-mon-integration/issues",
+  "codeowners": [
+    "@anazario93"
+  ],
+  "config_flow": true,
+  "iot_class": "local_push",
+  "requirements": []
+}
