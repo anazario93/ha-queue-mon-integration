@@ -61,6 +61,6 @@ class AsteriskQueueMonitorOptionsFlow(config_entries.OptionsFlow):
             vol.Optional(
                 CONF_REFRESH_INTERVAL,
                 default=self.config_entry.options.get(CONF_REFRESH_INTERVAL, DEFAULT_REFRESH_INTERVAL),
-            ): vol.All(int, vol.Range(min=5, max=120)),
+            ): vol.All(int, vol.Range(min=1, max=120)),
         })
         return self.async_show_form(step_id="init", data_schema=schema)
