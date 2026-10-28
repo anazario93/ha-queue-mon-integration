@@ -55,7 +55,7 @@ class QueueSensor(CoordinatorEntity, SensorEntity):
         if unit:
             self._attr_native_unit_of_measurement = unit
         if sensor_type in (SENSOR_WAITING_CALLS, SENSOR_AVAILABLE_AGENTS, SENSOR_ABANDONED_CALLS):
-            self._attr_state_class = SensorStateClass.TOTAL_INCREASING if sensor_type == SENSOR_ABANDONED_CALLS else SensorStateClass.MEASUREMENT
+            self._attr_state_class = SensorStateClass.MEASUREMENT
         if sensor_type == SENSOR_ABANDONED_CALLS:
             self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
