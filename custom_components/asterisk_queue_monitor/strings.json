@@ -1,0 +1,45 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Asterisk",
+        "description": "Enter the Asterisk Manager Interface (AMI) connection details.",
+        "data": {
+          "host": "Asterisk host",
+          "port": "AMI port",
+          "username": "AMI username",
+          "password": "AMI secret"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "This AMI connection is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Queue Monitor Options",
+        "data": {
+          "refresh_interval": "Queue refresh interval (seconds)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "waiting_calls": {
+        "name": "Waiting Calls"
+      },
+      "available_agents": {
+        "name": "Available Agents"
+      },
+      "waiting_callers": {
+        "name": "Waiting Callers"
+      },
+      "abandoned_calls": {
+        "name": "Abandoned Calls"
+      }
+    }
+  }
+}
