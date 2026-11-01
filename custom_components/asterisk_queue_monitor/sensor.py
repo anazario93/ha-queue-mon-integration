@@ -80,12 +80,17 @@ class QueueSensor(CoordinatorEntity, SensorEntity):
         if self._sensor_type == SENSOR_AVAILABLE_AGENTS:
             return {
                 "members": data.get("members", []),
-                "paused_agents": sum(1 for member in data.get("members", []) if member["paused"]),
-                "total_agents": len(data.get("members", [])),
+                "unique_members": data.get("unique_members", []),
+                "paused_agents": sum(1 for member in data.get("unique_members", []) if member["paused"]),
+                "total_agents": len(data.get("unique_members", [])),
             }
         if self._sensor_type == SENSOR_WAITING_CALLERS:
             return {
                 "callers": data.get("callers", []),
                 "queues": list(data.get("queues", {}).keys()),
             }
-        return {"last_event": data.get("last_event"), "connected": data.get("connected", False)}
+        return {
+            "last_event": data.get("last_event"),
+            "connected": data.get("connected", False),
+            "queues": {name: state.get("abandoned_calls", 0) for name, state in data.get("queues", {}).items()},
+        }
