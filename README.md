@@ -9,7 +9,7 @@ Initial development version. Test against your Asterisk version and queue strate
 ## Features
 
 - Total waiting calls and structured caller details
-- Available-agent count (unpaused members with AMI member status `1`, not in a call)
+- Available-agent count deduplicated by agent interface across queues (unpaused members with AMI member status `1`, not in a call)
 - Queue and position for each waiting caller
 - Wait duration, caller ID/name, and channel metadata
 - Abandoned-call counter
@@ -39,8 +39,8 @@ Each caller object includes `queue`, `position`, `caller_id`, `caller_name`, `ch
 ## Notes
 
 - Asterisk's `QueueStatus` action is used as the authoritative snapshot. Polling defaults to every **1 second** and can be changed in integration options to any whole number from 1 to 120 seconds. Every poll requests a full queue snapshot; on large deployments, increase the interval if AMI or Home Assistant load becomes noticeable.
-- Available-agent semantics can vary by queue strategy and device state. This initial implementation treats status `1` as available and excludes paused/in-call members. Validate this against your queue configuration.
-- The abandoned counter is in-memory and resets when the integration reloads or Home Assistant restarts in this initial release.
+- Available-agent semantics can vary by queue strategy and device state. The global available-agent count deduplicates members by AMI interface and excludes paused/in-call members; membership details remain available per queue. This initial implementation treats status `1` as available. Validate this against your queue configuration.
+- Abandoned-call totals are read from each queue’s `QueueParams` snapshot (`Abandoned`) and summed across queues. This follows Asterisk queue-stat resets instead of maintaining a separate in-memory counter. Per-queue abandoned totals are exposed on the abandoned-calls sensor.
 - Treat caller IDs as sensitive data; limit access to dashboards and entity history as appropriate.
 
 ## Development
