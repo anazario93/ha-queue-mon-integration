@@ -79,9 +79,7 @@ class QueueCoordinator(DataUpdateCoordinator):
         if not event_name:
             return
         self.last_event = event_name
-        if self.last_event == "QueueCallerAbandon":
-            self.abandoned_calls += 1
-        # The next periodic QueueStatus snapshot is authoritative for live state.
+        # QueueStatus snapshots provide authoritative counters and live state.
 
     async def _async_update_data(self) -> dict:
         """Get an authoritative QueueStatus snapshot."""
@@ -96,8 +94,10 @@ class QueueCoordinator(DataUpdateCoordinator):
             queue = event.get("Queue")
             if not queue:
                 continue
-            state = queues.setdefault(queue, {"callers": [], "members": []})
-            if kind == "QueueEntry":
+            state = queues.setdefault(queue, {"callers": [], "members": [], "abandoned_calls": 0})
+            if kind == "QueueParams":
+                state["abandoned_calls"] = _int(event.get("Abandoned"), 0)
+            elif kind == "QueueEntry":
                 state["callers"].append({
                     "queue": queue,
                     "position": _int(event.get("Position"), 0),
@@ -124,19 +124,34 @@ class QueueCoordinator(DataUpdateCoordinator):
             callers.extend(state["callers"])
             members.extend([{**member, "queue": queue_name} for member in state["members"]])
         callers.sort(key=lambda item: (item["queue"].lower(), item["position"]))
+        # Aggregate agent metrics by unique interface, not queue membership.
+        # An agent assigned to several queues must only count once globally.
+        unique_members: dict[str, dict] = {}
+        for member in members:
+            identity = (member.get("interface") or member.get("name") or "").strip().lower()
+            if not identity:
+                identity = member["queue"].lower() + ":unknown"
+            current = unique_members.get(identity)
+            # Prefer a record showing the agent is busy/paused over an
+            # available record from another queue.
+            if current is None or member["paused"] or member["in_call"] or member["status"] != 1:
+                unique_members[identity] = member
+
         # Asterisk member status 1 means not in use. Paused or in-call members
         # must not be counted as available.
         available = sum(
-            1 for member in members
+            1 for member in unique_members.values()
             if member["status"] == 1 and not member["paused"] and not member["in_call"]
         )
+        abandoned_calls = sum(state["abandoned_calls"] for state in queues.values())
         return {
             "queues": queues,
             "callers": callers,
             "members": members,
+            "unique_members": list(unique_members.values()),
             "waiting_calls": len(callers),
             "available_agents": available,
-            "abandoned_calls": self.abandoned_calls,
+            "abandoned_calls": abandoned_calls,
             "last_event": self.last_event,
             "connected": self.client.connected,
         }
